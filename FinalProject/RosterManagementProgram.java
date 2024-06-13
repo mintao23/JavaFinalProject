@@ -9,6 +9,7 @@ public class RosterManagementProgram {
     private static final String[] TITLE_ARRAY = {
             "Pastor", "Probation Pastor", "Junior Pastor", "Elder", "Exhorter", "Deacon", "Layman", "Student"
     };
+    private static final String DATE_FILE = "lastRunDate.txt";
     private static Map<Long, Person> people = new HashMap<>();
     private static Map<String, List<Person>> rosters = new HashMap<>();
     private static Set<Long> attendance = new HashSet<>();
@@ -23,6 +24,11 @@ public class RosterManagementProgram {
         initializeRosters();
         loadRosterFromFile("Roster.dat");
         loadAttendanceFromFile(ATTENDANCE_FILE);
+
+        if (isProgramDateChanged()) {
+            attendance.clear(); // 출석 초기화
+            System.out.println("Attendance reset because program date changed.");
+        }
 
         while (true) {
             System.out.println("Select an option: (1) Attendance, (2) Roster Management, (3) Exit");
@@ -44,16 +50,13 @@ public class RosterManagementProgram {
                     if (confirmExit()) {
                         saveAttendanceToFile(ATTENDANCE_FILE);
                         sortAndSaveRosterToFile(ROSTER_FILE); // Roster.txt 파일 정렬 후 저장
+                        saveProgramDate();
                         System.out.println("Exiting program...");
                         return;
                     }
                     break;
                 default:
                     System.out.println("Invalid choice! Please try again.");
-            }
-            if (isProgramDateChanged()) {
-                attendance.clear(); // 출석 초기화
-                System.out.println("Attendance reset because program date changed.");
             }
         }
     }
@@ -262,40 +265,29 @@ public class RosterManagementProgram {
             case 5:
                 return "Kindergarten";
             default:
-                System.out.println("Invalid choice! Defaulting to Senior.");
+                System.out.println("Invalid choice! Defaulting to 'Senior'");
                 return "Senior";
         }
     }
 
     private static boolean confirmExit() {
-        if (isModified) {
-            System.out.println("There are unsaved changes. Do you want to save before exiting? (yes/no)");
-            if (scanner.nextLine().equalsIgnoreCase("yes")) {
-                saveRoster();
-            }
-        }
-        System.out.println("Are you sure you want to exit? (yes/no)");
+        System.out.println("Do you want to save before exiting? (yes/no)");
         return scanner.nextLine().equalsIgnoreCase("yes");
     }
 
+    @SuppressWarnings("unchecked")
     private static void loadAttendanceFromFile(String fileName) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                long ssn = Long.parseLong(line);
-                attendance.add(ssn);
-            }
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName))) {
+            attendance = (Set<Long>) ois.readObject();
             System.out.println("Attendance loaded successfully.");
-        } catch (IOException | NumberFormatException e) {
+        } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error loading attendance from file: " + e.getMessage());
         }
     }
 
     private static void saveAttendanceToFile(String fileName) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) {
-            for (Long ssn : attendance) {
-                writer.println(ssn);
-            }
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName))) {
+            oos.writeObject(attendance);
             System.out.println("Attendance saved successfully.");
         } catch (IOException e) {
             System.err.println("Error saving attendance to file: " + e.getMessage());
@@ -304,47 +296,26 @@ public class RosterManagementProgram {
 
     private static void sortAndSaveRosterToFile(String fileName) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) {
-            // 소속을 순서에 따라 정렬하기 위한 Comparator
-            Comparator<String> branchComparator = Comparator.comparingInt(RosterManagementProgram::getBranchOrder);
+            List<Person> sortedPeople = new ArrayList<>(people.values());
+            sortedPeople.sort(Comparator.comparingInt(p -> getBranchOrder(p.getTitle())));
 
-            // 소속을 순서에 따라 정렬된 키 집합 생성
-            List<String> sortedBranches = new ArrayList<>(rosters.keySet());
-            sortedBranches.sort(branchComparator);
-
-            for (String branch : sortedBranches) {
-                List<Person> roster = rosters.get(branch);
-
-                // title의 index가 낮은 순서대로 정렬
-                roster.sort(Comparator.comparingInt(person -> getTitleIndex(person.getTitle())));
-
-                writer.println("Branch: " + branch);
-                for (Person person : roster) {
-                    writer.println(person.getName() + "," + person.getAge() + "," + person.getTitle());
-                }
-                writer.println(); // 소속 간의 간격을 위한 빈 줄 추가
+            for (Person person : sortedPeople) {
+                writer.println(person.getName() + "," + person.getAge() + "," + person.getTitle() + ","
+                        + person.getSsn());
             }
-            System.out.println("Roster sorted and saved successfully.");
+            System.out.println("Sorted roster saved to " + fileName);
         } catch (IOException e) {
             System.err.println("Error saving sorted roster to file: " + e.getMessage());
         }
     }
 
-    // 소속의 순서를 반환하는 메서드
-    private static int getBranchOrder(String branch) {
-        switch (branch) {
-            case "Senior":
-                return 1;
-            case "Young Adult":
-                return 2;
-            case "Youth":
-                return 3;
-            case "Preschool":
-                return 4;
-            case "Kindergarten":
-                return 5;
-            default:
-                return Integer.MAX_VALUE; // 정의되지 않은 소속은 가장 큰 값으로 설정하여 맨 뒤로 이동
+    private static int getBranchOrder(String title) {
+        for (int i = 0; i < TITLE_ARRAY.length; i++) {
+            if (TITLE_ARRAY[i].equals(title)) {
+                return i;
+            }
         }
+        return TITLE_ARRAY.length;
     }
 
     private static int getTitleIndex(String title) {
@@ -353,10 +324,28 @@ public class RosterManagementProgram {
                 return i;
             }
         }
-        return TITLE_ARRAY.length; // 정의되지 않은 title은 가장 높은 index 반환
+        return -1; // Invalid title
     }
+
+    private static void saveProgramDate() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(DATE_FILE))) {
+            writer.println(programStartDate);
+            System.out.println("Program date saved successfully.");
+        } catch (IOException e) {
+            System.err.println("Error saving program date to file: " + e.getMessage());
+        }
+    }
+
     private static boolean isProgramDateChanged() {
-        // 프로그램 실행 중인 날짜와 프로그램 시작일을 비교하여 변경 여부 판단
-        return !LocalDate.now().isEqual(programStartDate);
+        try (BufferedReader reader = new BufferedReader(new FileReader(DATE_FILE))) {
+            String line = reader.readLine();
+            if (line != null) {
+                LocalDate lastRunDate = LocalDate.parse(line);
+                return !lastRunDate.equals(programStartDate);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading program date from file: " + e.getMessage());
+        }
+        return true; // If date file is not found or unreadable, assume date has changed
     }
 }

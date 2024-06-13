@@ -1,13 +1,3 @@
-Branch: Senior
-Gildong Hong,45,Pastor
-
-Branch: Young Adult
-Taehong Min,21,Student
-
-Branch: Youth
-
-Branch: Preschool
-Hayoung Kim,13,Student
-
-Branch: Kindergarten
-
+Gildong Hong,45,Pastor,1234567
+Hayoung Kim,13,Student,4012345
+Taehong Min,21,Student,3123456
