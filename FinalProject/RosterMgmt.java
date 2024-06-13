@@ -4,43 +4,43 @@ import java.io.*;
 import java.time.LocalDate;
 import java.util.*;
 
-public class RosterManagementProgram {
-    private static final String PASSWORD = "0920"; // Roster Management 접근 비밀번호
-    private static final String[] TITLE_ARRAY = {
+public class RosterMgmt {
+    private static final String PASS = "0920"; // Roster Management 접근 비밀번호
+    private static final String[] TITLES = {
             "Pastor", "Probation Pastor", "Junior Pastor", "Elder", "Exhorter", "Deacon", "Layman", "Student"
     };
     private static final String DATE_FILE = "lastRunDate.txt";
     private static Map<Long, Person> people = new HashMap<>();
     private static Map<String, List<Person>> rosters = new HashMap<>();
     private static Set<Long> attendance = new HashSet<>();
-    private static Scanner scanner = new Scanner(System.in);
+    private static Scanner sc = new Scanner(System.in);
     private static boolean isModified = false; // 명단이 수정되었는지 여부를 추적하는 변수
-    private static final String ATTENDANCE_FILE = "Attendance.dat";
+    private static final String ATT_FILE = "Attendance.dat";
     private static final String ROSTER_FILE = "Roster.txt";
-    private static LocalDate programStartDate;
+    private static LocalDate progStartDate;
 
     public static void main(String[] args) {
-        programStartDate = LocalDate.now();
-        initializeRosters();
-        loadRosterFromFile("Roster.dat");
-        loadAttendanceFromFile(ATTENDANCE_FILE);
+        progStartDate = LocalDate.now();
+        initRosters();
+        loadRoster("Roster.dat");
+        loadAttendance(ATT_FILE);
 
-        if (isProgramDateChanged()) {
+        if (isDateChanged()) {
             attendance.clear(); // 출석 초기화
             System.out.println("Attendance reset because program date changed.");
         }
 
         while (true) {
-            System.out.println("Select an option: (1) Attendance, (2) Roster Management, (3) Exit");
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            System.out.println("Select an option: (1) Attendance, (2) Roster Mgmt, (3) Exit");
+            int choice = sc.nextInt();
+            sc.nextLine(); // Consume newline
 
             switch (choice) {
                 case 1:
                     handleAttendance();
                     break;
                 case 2:
-                    if (checkPassword()) {
+                    if (checkPass()) {
                         manageRoster();
                     } else {
                         System.out.println("Incorrect password. Returning to main menu.");
@@ -48,9 +48,9 @@ public class RosterManagementProgram {
                     break;
                 case 3:
                     if (confirmExit()) {
-                        saveAttendanceToFile(ATTENDANCE_FILE);
-                        sortAndSaveRosterToFile(ROSTER_FILE); // Roster.txt 파일 정렬 후 저장
-                        saveProgramDate();
+                        saveAttendance(ATT_FILE);
+                        saveRosterSorted(ROSTER_FILE); // Roster.txt 파일 정렬 후 저장
+                        saveDate();
                         System.out.println("Exiting program...");
                         return;
                     }
@@ -61,7 +61,7 @@ public class RosterManagementProgram {
         }
     }
 
-    private static void initializeRosters() {
+    private static void initRosters() {
         rosters.put("Senior", new ArrayList<>());
         rosters.put("Young Adult", new ArrayList<>());
         rosters.put("Youth", new ArrayList<>());
@@ -69,7 +69,7 @@ public class RosterManagementProgram {
         rosters.put("Kindergarten", new ArrayList<>());
     }
 
-    private static void loadRosterFromFile(String fileName) {
+    private static void loadRoster(String fileName) {
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -95,18 +95,18 @@ public class RosterManagementProgram {
 
     private static void handleAttendance() {
         System.out.println("Enter the unique number (SSN):");
-        long uniqueNumber = scanner.nextLong();
-        scanner.nextLine(); // Consume newline
+        long ssn = sc.nextLong();
+        sc.nextLine(); // Consume newline
 
-        Person person = people.get(uniqueNumber);
+        Person person = people.get(ssn);
         if (person != null) {
-            if (attendance.contains(uniqueNumber)) {
+            if (attendance.contains(ssn)) {
                 System.out.println("This person has already been marked as present.");
             } else {
                 System.out.println(person);
                 System.out.println("Is this you? (yes/no)");
-                if (scanner.nextLine().equalsIgnoreCase("yes")) {
-                    attendance.add(uniqueNumber);
+                if (sc.nextLine().equalsIgnoreCase("yes")) {
+                    attendance.add(ssn);
                     System.out.println("Attendance confirmed.");
                 }
             }
@@ -115,17 +115,17 @@ public class RosterManagementProgram {
         }
     }
 
-    private static boolean checkPassword() {
-        System.out.println("Enter password to access Roster Management:");
-        String inputPassword = scanner.nextLine();
-        return PASSWORD.equals(inputPassword);
+    private static boolean checkPass() {
+        System.out.println("Enter password to access Roster Mgmt:");
+        String inputPass = sc.nextLine();
+        return PASS.equals(inputPass);
     }
 
     private static void manageRoster() {
         while (true) {
             System.out.println("Select an option: (1) Add, (2) Remove, (3) Change, (4) View, (5) Save, (6) Leave");
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            int choice = sc.nextInt();
+            sc.nextLine(); // Consume newline
 
             switch (choice) {
                 case 1:
@@ -153,20 +153,20 @@ public class RosterManagementProgram {
 
     private static void addPerson() {
         System.out.println("Enter name:");
-        String name = scanner.nextLine();
+        String name = sc.nextLine();
         System.out.println("Enter age:");
-        int age = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        int age = sc.nextInt();
+        sc.nextLine(); // Consume newline
         System.out.println(
                 "Enter title (Pastor, Probation Pastor, Junior Pastor, Elder, Exhorter, Deacon, Layman, Student):");
-        String title = scanner.nextLine();
+        String title = sc.nextLine();
         while (!isValidTitle(title)) {
             System.out.println("Invalid title! Please enter a valid title:");
-            title = scanner.nextLine();
+            title = sc.nextLine();
         }
         System.out.println("Enter SSN:");
-        long ssn = scanner.nextLong();
-        scanner.nextLine(); // Consume newline
+        long ssn = sc.nextLong();
+        sc.nextLine(); // Consume newline
         String branch = selectBranch();
 
         Person newPerson = new Person(name, age, title, ssn);
@@ -177,8 +177,8 @@ public class RosterManagementProgram {
     }
 
     private static boolean isValidTitle(String title) {
-        for (String validTitle : TITLE_ARRAY) {
-            if (validTitle.equals(title)) {
+        for (String validTitle : TITLES) {
+            if (validTitle.equalsIgnoreCase(title)) {
                 return true;
             }
         }
@@ -187,10 +187,10 @@ public class RosterManagementProgram {
 
     private static void removePerson() {
         System.out.println("Enter the unique number (SSN) to remove:");
-        long uniqueNumber = scanner.nextLong();
-        scanner.nextLine(); // Consume newline
+        long ssn = sc.nextLong();
+        sc.nextLine(); // Consume newline
 
-        Person person = people.remove(uniqueNumber);
+        Person person = people.remove(ssn);
 
         if (person != null) {
             for (List<Person> list : rosters.values()) {
@@ -205,10 +205,10 @@ public class RosterManagementProgram {
 
     private static void changePerson() {
         System.out.println("Enter the unique number (SSN) to change:");
-        long uniqueNumber = scanner.nextLong();
-        scanner.nextLine(); // Consume newline
+        long ssn = sc.nextLong();
+        sc.nextLine(); // Consume newline
 
-        Person person = people.get(uniqueNumber);
+        Person person = people.get(ssn);
 
         if (person != null) {
             for (List<Person> list : rosters.values()) {
@@ -224,8 +224,8 @@ public class RosterManagementProgram {
         String branch = selectBranch();
         List<Person> roster = rosters.get(branch);
         for (Person person : roster) {
-            String attendanceStatus = attendance.contains(person.getSsn()) ? "Present" : "Absent";
-            System.out.println(person + ", Attendance: " + attendanceStatus);
+            String attStatus = attendance.contains(person.getSsn()) ? "Present" : "Absent";
+            System.out.println(person + ", Attendance: " + attStatus);
         }
     }
 
@@ -250,8 +250,8 @@ public class RosterManagementProgram {
 
     private static String selectBranch() {
         System.out.println("Select a branch: (1) Senior, (2) Young Adult, (3) Youth, (4) Preschool, (5) Kindergarten");
-        int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        int choice = sc.nextInt();
+        sc.nextLine(); // Consume newline
 
         switch (choice) {
             case 1:
@@ -265,87 +265,83 @@ public class RosterManagementProgram {
             case 5:
                 return "Kindergarten";
             default:
-                System.out.println("Invalid choice! Defaulting to 'Senior'");
+                System.out.println("Invalid choice! Defaulting to Senior.");
                 return "Senior";
         }
     }
 
-    private static boolean confirmExit() {
-        System.out.println("Do you want to save before exiting? (yes/no)");
-        return scanner.nextLine().equalsIgnoreCase("yes");
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void loadAttendanceFromFile(String fileName) {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName))) {
-            attendance = (Set<Long>) ois.readObject();
-            System.out.println("Attendance loaded successfully.");
-        } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error loading attendance from file: " + e.getMessage());
-        }
-    }
-
-    private static void saveAttendanceToFile(String fileName) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName))) {
-            oos.writeObject(attendance);
-            System.out.println("Attendance saved successfully.");
-        } catch (IOException e) {
-            System.err.println("Error saving attendance to file: " + e.getMessage());
-        }
-    }
-
-    private static void sortAndSaveRosterToFile(String fileName) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) {
-            List<Person> sortedPeople = new ArrayList<>(people.values());
-            sortedPeople.sort(Comparator.comparingInt(p -> getBranchOrder(p.getTitle())));
-
-            for (Person person : sortedPeople) {
-                writer.println(person.getName() + "," + person.getAge() + "," + person.getTitle() + ","
-                        + person.getSsn());
+    private static void loadAttendance(String fileName) {
+        try (Scanner fileScanner = new Scanner(new File(fileName))) {
+            while (fileScanner.hasNextLong()) {
+                long ssn = fileScanner.nextLong();
+                attendance.add(ssn);
             }
-            System.out.println("Sorted roster saved to " + fileName);
-        } catch (IOException e) {
-            System.err.println("Error saving sorted roster to file: " + e.getMessage());
+            System.out.println("Attendance data loaded successfully.");
+        } catch (FileNotFoundException e) {
+            System.err.println("Attendance file not found. Starting with empty attendance.");
         }
     }
 
-    private static int getBranchOrder(String title) {
-        for (int i = 0; i < TITLE_ARRAY.length; i++) {
-            if (TITLE_ARRAY[i].equals(title)) {
-                return i;
-            }
-        }
-        return TITLE_ARRAY.length;
-    }
-
-    private static int getTitleIndex(String title) {
-        for (int i = 0; i < TITLE_ARRAY.length; i++) {
-            if (TITLE_ARRAY[i].equals(title)) {
-                return i;
-            }
-        }
-        return -1; // Invalid title
-    }
-
-    private static void saveProgramDate() {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(DATE_FILE))) {
-            writer.println(programStartDate);
-            System.out.println("Program date saved successfully.");
-        } catch (IOException e) {
-            System.err.println("Error saving program date to file: " + e.getMessage());
-        }
-    }
-
-    private static boolean isProgramDateChanged() {
+    private static boolean isDateChanged() {
+        LocalDate savedDate = LocalDate.now();
         try (BufferedReader reader = new BufferedReader(new FileReader(DATE_FILE))) {
-            String line = reader.readLine();
-            if (line != null) {
-                LocalDate lastRunDate = LocalDate.parse(line);
-                return !lastRunDate.equals(programStartDate);
-            }
+            String savedDateString = reader.readLine();
+            savedDate = LocalDate.parse(savedDateString);
         } catch (IOException e) {
-            System.err.println("Error reading program date from file: " + e.getMessage());
+            System.err.println("Error reading date file: " + e.getMessage());
         }
-        return true; // If date file is not found or unreadable, assume date has changed
+
+        return !progStartDate.equals(savedDate);
+    }
+
+    private static void saveAttendance(String fileName) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) {
+            for (long ssn : attendance) {
+                writer.println(ssn);
+            }
+            System.out.println("Attendance data saved successfully.");
+        } catch (IOException e) {
+            System.err.println("Error saving attendance data: " + e.getMessage());
+        }
+    }
+
+    private static void saveRosterSorted(String fileName) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) {
+            List<Person> sortedList = new ArrayList<>();
+            for (List<Person> list : rosters.values()) {
+                sortedList.addAll(list);
+            }
+            sortedList.sort(Comparator.comparing(Person::getName));
+
+            for (Person person : sortedList) {
+                writer.println(person.getName() + "," + person.getAge() + "," + person.getTitle() + "," +
+                        person.getSsn());
+            }
+            System.out.println("Sorted roster saved successfully.");
+        } catch (IOException e) {
+            System.err.println("Error saving sorted roster: " + e.getMessage());
+        }
+    }
+
+    private static void saveDate() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(DATE_FILE))) {
+            writer.println(progStartDate);
+            System.out.println("Program date saved.");
+        } catch (IOException e) {
+            System.err.println("Error saving program date: " + e.getMessage());
+        }
+    }
+
+    private static boolean confirmExit() {
+        if (isModified) {
+            System.out.println("Data has been modified. Do you want to save before exiting? (yes/no)");
+            String answer = sc.nextLine();
+            if (answer.equalsIgnoreCase("yes")) {
+                saveRoster();
+                saveAttendance(ATT_FILE);
+                saveDate();
+            }
+        }
+        return true;
     }
 }
