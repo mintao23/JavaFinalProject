@@ -1,3 +1,3 @@
 Gildong Hong,45,Pastor,1234567
 Hayoung Kim,13,Student,4012345
-Taehong Min,21,Student,3123456
+Minsu Kim,6,Student,5123456
