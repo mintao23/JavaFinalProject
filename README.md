@@ -27,10 +27,10 @@
 ### 2. Attendance Management
 #### Recording Attendance
 >Users can input their SSN to verify their identity and update their attendance status.
-<img src='https://github.com/mintao23/JavaFinalProject/blob/main/screenshot/attendace1.png'>
+<img src='https://github.com/mintao23/JavaFinalProject/blob/main/screenshot/attendance1.png'>
 
 >The system confirms attendance and indicates whether the user has already been marked present.
-<img src='https://github.com/mintao23/JavaFinalProject/blob/main/screenshot/attendace2.png'>
+<img src='https://github.com/mintao23/JavaFinalProject/blob/main/screenshot/attendance2.png'>
 
 ## 3. Roster Management
 ### Password Entry
