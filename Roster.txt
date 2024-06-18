@@ -1,3 +1,3 @@
-Gyeongchan Yi,20,Student,Young Adult
-Hayoung Kim,13,Student,Preschool
-Minsu Kim,6,Student,Kindergarten
+Gyeongchan Yi,20,Student,3123412
+Hayoung Kim,13,Student,4012345
+Minsu Kim,6,Student,5123456
